@@ -1,0 +1,9 @@
+{
+  "name": "com.upwork.ai.collector",
+  "path": "C:\\Users\\TT\\upwork2\\native\\collector_runner.bat",
+  "type": "stdio",
+  "description": "Upwork AI Collector",
+  "allowed_origins": [
+    "chrome-extension://hihidhbccnfmkcelbjffncchbaccmcpk/"
+  ]
+}

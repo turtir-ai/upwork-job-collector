@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Upwork AI Assistant - Ayarlar</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 40px;
+      max-width: 700px;
+      margin: 0 auto;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    
+    .form-group {
+      margin-bottom: 25px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+      font-size: 14px;
+    }
+    
+    .helper-text {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
+    
+    input[type="text"],
+    input[type="password"],
+    textarea {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+    
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    textarea {
+      resize: vertical;
+      min-height: 120px;
+      font-family: inherit;
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 30px;
+    }
+    
+    button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 14px;
+    }
+    
+    #save-button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      flex: 1;
+    }
+    
+    #save-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    #test-button {
+      background: #f0f0f0;
+      color: #333;
+    }
+    
+    #test-button:hover {
+      background: #e0e0e0;
+    }
+    
+    #status {
+      margin-top: 20px;
+      padding: 12px 15px;
+      border-radius: 8px;
+      font-weight: 500;
+      display: none;
+      font-size: 14px;
+    }
+    
+    #status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      display: block;
+    }
+    
+    #status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      display: block;
+    }
+    
+    .section {
+      padding: 20px 0;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .section:last-child {
+      border-bottom: none;
+    }
+    
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 15px;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin-top: 20px;
+    }
+    
+    .stat-card {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    
+    .stat-number {
+      font-size: 24px;
+      font-weight: bold;
+      color: #667eea;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
+    
+    .success-patterns {
+      margin-top: 15px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    
+    .pattern-item {
+      display: inline-block;
+      padding: 6px 12px;
+      background: white;
+      border: 1px solid #667eea;
+      color: #667eea;
+      border-radius: 20px;
+      margin: 5px;
+      font-size: 13px;
+    }
+    
+    .api-key-toggle {
+      display: inline-block;
+      margin-left: 10px;
+      color: #667eea;
+      cursor: pointer;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>⚙️ Upwork AI Assistant Ayarları</h1>
+    <p class="subtitle">AI analizleri ve teklif üretimi için ayarlarınızı yapılandırın</p>
+    
+    <div class="section">
+      <div class="section-title">🔑 API Yapılandırması</div>
+      <div class="form-group">
+        <label for="api-key">
+          Gemini API Anahtarı
+          <span class="api-key-toggle" onclick="togglePasswordVisibility()">👁️ Göster/Gizle</span>
+        </label>
+        <input type="password" id="api-key" placeholder="AIzaSy...">
+        <div class="helper-text">
+          Google AI Studio'dan aldığınız API anahtarınızı buraya girin. 
+          <a href="https://makersuite.google.com/app/apikey" target="_blank" style="color: #667eea;">API Anahtarı Al →</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">👤 Profil Bilgileri</div>
+      <div class="form-group">
+        <label for="user-profile">Kısa Profiliniz ve Uzmanlık Alanlarınız</label>
+        <textarea id="user-profile" placeholder="Örnek: Python ve web scraping konusunda 5+ yıl deneyimim var. Özellikle Playwright, Selenium ve BeautifulSoup ile karmaşık web sitelerinden veri çıkarma, anti-bot sistemlerini aşma, proxy yönetimi ve session handling konularında uzmanım. React ve Node.js ile full-stack geliştirme yapabiliyorum..."></textarea>
+        <div class="helper-text">Bu bilgi, AI'ın size özel iş analizleri ve teklif taslakları hazırlaması için kullanılacak.</div>
+      </div>
+      
+      <div class="form-group">
+        <label for="hourly-rate">Saatlik Ücret Tercihiniz (Opsiyonel)</label>
+        <input type="text" id="hourly-rate" placeholder="Örn: $25-50">
+        <div class="helper-text">AI, bu aralığa uygun işlere daha yüksek skor verecek.</div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">📊 İstatistikler</div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number" id="total-jobs">0</div>
+          <div class="stat-label">Toplam İş</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="applied-jobs">0</div>
+          <div class="stat-label">Başvurulan</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="won-jobs">0</div>
+          <div class="stat-label">Kazanılan</div>
+        </div>
+      </div>
+      
+      <div class="success-patterns" id="patterns-container">
+        <strong>🎯 Başarı Desenleriniz:</strong>
+        <div id="patterns-list">Henüz yeterli veri yok</div>
+      </div>
+    </div>
+    
+    <div class="button-group">
+      <button id="test-button">🧪 API Test Et</button>
+      <button id="save-button">💾 Ayarları Kaydet</button>
+    </div>
+    
+    <div id="status"></div>
+  </div>
+  
+  <script src="options.js"></script>
+</body>
+</html>

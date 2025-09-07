@@ -1,0 +1,13 @@
+{
+  "name": "com.upwork.ai.collector",
+  "description": "Upwork AI Assistant Native Host (runs Python Playwright collector)",
+  "path": "C:\\Users\\TT\\upwork2\\venv\\Scripts\\python.exe",
+  "type": "stdio",
+  "args": [
+    "C:\\Users\\TT\\upwork2\\scripts\\native_host\\collector_host.py"
+  ],
+  "allowed_origins": [
+    "chrome-extension://*/*"
+  ]
+}
+

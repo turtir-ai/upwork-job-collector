@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upwork Live Collector - Test Page</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #14a800; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        button { background: #14a800; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #108a00; }
+        .results { background: #f9f9f9; padding: 10px; margin-top: 10px; border-radius: 3px; white-space: pre-wrap; font-family: monospace; }
+        .status { padding: 5px 10px; border-radius: 3px; margin: 5px 0; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Upwork AI Assistant - Test Page</h1>
+        
+        <div class="test-section">
+            <h2>Extension Status Check</h2>
+            <p>Bu sayfa, Upwork Live Collector uzantısının düzgün yüklenip çalıştığını test etmek için tasarlanmıştır.</p>
+            
+            <button onclick="checkExtensionStatus()">Check Extension Status</button>
+            <button onclick="simulateUpworkAPI()">Simulate Upwork API Call</button>
+            <button onclick="checkStorage()">Check Stored Jobs</button>
+            <button onclick="clearStorage()">Clear Storage</button>
+            
+            <div id="status" class="results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Manual Test Instructions</h2>
+            <ol>
+                <li>Chrome uzantılarına git: <code>chrome://extensions</code></li>
+                <li>"Developer mode" açık olduğundan emin ol</li>
+                <li>"Load unpacked" ile bu klasörü yükle</li>
+                <li>Upwork iş arama sayfasına git: <a href="https://www.upwork.com/nx/find-work/" target="_blank">https://www.upwork.com/nx/find-work/</a></li>
+                <li>Sayfayı kaydır ve yeni işlerin yüklenmesini bekle</li>
+                <li>Chrome DevTools Console'unda "[Upwork Live Collector]" loglarını kontrol et</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h2>Stored Jobs (Real-time)</h2>
+            <div id="jobsList" class="results">Click "Check Stored Jobs" to see collected data...</div>
+        </div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : '';
+            statusDiv.innerHTML += `<div class="status ${className}">[${timestamp}] ${message}</div>`;
+            statusDiv.scrollTop = statusDiv.scrollHeight;
+        }
+
+        async function checkExtensionStatus() {
+            log('Checking extension status...', 'info');
+            
+            if (typeof chrome === 'undefined' || !chrome.runtime) {
+                log('❌ Chrome extension API not available. This page needs to be accessed from an extension context.', 'error');
+                return;
+            }
+            
+            try {
+                // Try to communicate with service worker
+                const response = await new Promise((resolve, reject) => {
+                    chrome.runtime.sendMessage({ type: 'GET_COLLECTED_JOBS' }, (response) => {
+                        if (chrome.runtime.lastError) {
+                            reject(chrome.runtime.lastError);
+                        } else {
+                            resolve(response);
+                        }
+                    });
+                });
+                
+                if (response && response.success) {
+                    log(`✅ Extension is working! Found ${response.jobs ? response.jobs.length : 0} stored jobs.`, 'success');
+                } else {
+                    log(`⚠️ Extension responded but with error: ${response?.error || 'unknown'}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Extension communication failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function simulateUpworkAPI() {
+            log('Simulating Upwork API call...', 'info');
+            
+            // Simulate a fake GraphQL response similar to what Upwork might return
+            const mockData = {
+                data: {
+                    marketplaceJobPostingsSearch: {
+                        edges: [
+                            {
+                                node: {
+                                    id: "test-job-1",
+                                    title: "Web Scraping Specialist - E-commerce Data Extraction",
+                                    description: "Looking for an expert web scraper to extract product data from multiple e-commerce websites. Must handle anti-bot measures, proxies, and session management. Experience with Python, Selenium, and Scrapy required.",
+                                    skills: [{ name: "Web Scraping" }, { name: "Python" }, { name: "Selenium" }, { name: "Anti-bot Evasion" }],
+                                    upworkUrl: "https://www.upwork.com/jobs/test-job-1"
+                                }
+                            },
+                            {
+                                node: {
+                                    id: "test-job-2", 
+                                    title: "Full-Stack Developer - React & Node.js Platform",
+                                    description: "Need a full-stack developer to build a data visualization platform with React frontend and Node.js backend. Must integrate with multiple APIs and handle large datasets efficiently.",
+                                    skills: [{ name: "React" }, { name: "Node.js" }, { name: "API Integration" }, { name: "Data Visualization" }],
+                                    upworkUrl: "https://www.upwork.com/jobs/test-job-2"
+                                }
+                            },
+                            {
+                                node: {
+                                    id: "test-job-3", 
+                                    title: "Automation Expert - Browser Bot Development",
+                                    description: "Seeking an automation expert to develop browser bots that can handle complex user interactions, CAPTCHA solving, and session persistence. Experience with Puppeteer and Playwright essential.",
+                                    skills: [{ name: "Browser Automation" }, { name: "Puppeteer" }, { name: "Playwright" }, { name: "CAPTCHA Solving" }],
+                                    upworkUrl: "https://www.upwork.com/jobs/test-job-3"
+                                }
+                            }
+                        ]
+                    }
+                }
+            };
+
+            try {
+                // Send to service worker as if it came from injected script
+                const response = await new Promise((resolve, reject) => {
+                    chrome.runtime.sendMessage({
+                        type: 'PROCESS_UPWORK_DATA',
+                        payload: { url: 'test://simulation', ...mockData }
+                    }, (response) => {
+                        if (chrome.runtime.lastError) {
+                            reject(chrome.runtime.lastError);
+                        } else {
+                            resolve(response || { success: true });
+                        }
+                    });
+                });
+
+                log('✅ Mock data sent to service worker successfully!', 'success');
+                
+                // Check storage after a brief delay
+                setTimeout(checkStorage, 1000);
+                
+            } catch (error) {
+                log(`❌ Failed to send mock data: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkStorage() {
+            log('Checking Chrome storage...', 'info');
+            
+            try {
+                const response = await new Promise((resolve, reject) => {
+                    chrome.runtime.sendMessage({ type: 'GET_COLLECTED_JOBS' }, (response) => {
+                        if (chrome.runtime.lastError) {
+                            reject(chrome.runtime.lastError);
+                        } else {
+                            resolve(response);
+                        }
+                    });
+                });
+
+                if (response && response.success) {
+                    const jobs = response.jobs || [];
+                    log(`✅ Found ${jobs.length} jobs in storage`, 'success');
+                    
+                    const jobsList = document.getElementById('jobsList');
+                    if (jobs.length > 0) {
+                        jobsList.innerHTML = jobs.map((job, index) => `
+                            <div style="border-bottom: 1px solid #eee; padding: 10px 0;">
+                                <strong>${index + 1}. ${job.title || 'No title'}</strong><br>
+                                <small>ID: ${job.id || 'N/A'}</small><br>
+                                <small>URL: ${job.url || 'N/A'}</small><br>
+                                <small>Skills: ${Array.isArray(job.skills) ? job.skills.join(', ') : 'N/A'}</small><br>
+                                <small>Added: ${job.timestamp || 'N/A'}</small>
+                                ${job.description ? `<div style="margin-top: 5px; color: #666;">${job.description.substring(0, 100)}...</div>` : ''}
+                            </div>
+                        `).join('');
+                    } else {
+                        jobsList.innerHTML = 'No jobs found in storage. Visit Upwork and browse job listings to collect data.';
+                    }
+                } else {
+                    log(`❌ Failed to get storage data: ${response?.error || 'unknown error'}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Storage check failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function clearStorage() {
+            log('Clearing storage...', 'info');
+            
+            try {
+                await new Promise((resolve, reject) => {
+                    chrome.storage.local.clear(() => {
+                        if (chrome.runtime.lastError) {
+                            reject(chrome.runtime.lastError);
+                        } else {
+                            resolve();
+                        }
+                    });
+                });
+                
+                log('✅ Storage cleared successfully!', 'success');
+                document.getElementById('jobsList').innerHTML = 'Storage cleared. No jobs found.';
+                
+            } catch (error) {
+                log(`❌ Failed to clear storage: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-check extension status on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                log('Page loaded. Starting extension status check...');
+                checkExtensionStatus();
+            }, 500);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Collector JSON Handling</title>
+</head>
+<body>
+    <h1>Test Collector JSON Handling</h1>
+    <p>Open console to see results</p>
+    
+    <script>
+        // Test that the collector handles various response types correctly
+        
+        // Simulate SSE response (this was causing the error)
+        async function testSSEResponse() {
+            const sseData = `event: message\ndata: {"test": "sse"}\n\n`;
+            const blob = new Blob([sseData], { type: 'text/event-stream' });
+            const response = new Response(blob, {
+                headers: { 'content-type': 'text/event-stream' }
+            });
+            console.log('Testing SSE response - should be skipped');
+            return response;
+        }
+        
+        // Simulate GraphQL response with XSSI protection
+        async function testGraphQLWithXSSI() {
+            const data = `)]}',\n{"data":{"marketplaceJobPostingsSearch":{"edges":[{"node":{"id":"123","title":"Test Job","description":"Test Description"}}]}}}`;
+            const blob = new Blob([data], { type: 'application/json' });
+            const response = new Response(blob, {
+                headers: { 'content-type': 'application/json' }
+            });
+            console.log('Testing GraphQL with XSSI protection - should be parsed');
+            return response;
+        }
+        
+        // Simulate regular JSON response
+        async function testRegularJSON() {
+            const data = JSON.stringify({
+                data: {
+                    marketplaceJobPostingsSearch: {
+                        edges: [
+                            {
+                                node: {
+                                    id: "456",
+                                    title: "Another Test Job",
+                                    description: "Another Test Description"
+                                }
+                            }
+                        ]
+                    }
+                }
+            });
+            const blob = new Blob([data], { type: 'application/json' });
+            const response = new Response(blob, {
+                headers: { 'content-type': 'application/json' }
+            });
+            console.log('Testing regular JSON - should be parsed');
+            return response;
+        }
+        
+        // Simulate text/plain response
+        async function testTextResponse() {
+            const data = "This is plain text, not JSON";
+            const blob = new Blob([data], { type: 'text/plain' });
+            const response = new Response(blob, {
+                headers: { 'content-type': 'text/plain' }
+            });
+            console.log('Testing text/plain response - should be skipped');
+            return response;
+        }
+        
+        // Load collector and run tests
+        async function runTests() {
+            console.log('Loading collector-final.js...');
+            
+            // Load the collector script
+            const script = document.createElement('script');
+            script.src = 'dist/collector-final.js';
+            script.onload = async () => {
+                console.log('Collector loaded, running tests...');
+                
+                // Give it a moment to initialize
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Test different response types
+                console.group('Testing response handling:');
+                
+                // Test SSE (should not cause error)
+                fetch('/test/sse').catch(() => {});
+                await testSSEResponse();
+                
+                // Test GraphQL with XSSI
+                fetch('/graphql/test1').catch(() => {});
+                await testGraphQLWithXSSI();
+                
+                // Test regular JSON
+                fetch('/graphql/test2').catch(() => {});
+                await testRegularJSON();
+                
+                // Test text response
+                fetch('/test/text').catch(() => {});
+                await testTextResponse();
+                
+                console.groupEnd();
+                
+                console.log('Tests completed - check for any parsing errors above');
+            };
+            
+            document.head.appendChild(script);
+        }
+        
+        // Listen for messages from collector
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'UPWORK_JOBS_COLLECTED') {
+                console.log('✅ Jobs collected successfully:', event.data.jobs);
+            }
+        });
+        
+        // Run tests when page loads
+        runTests();
+    </script>
+</body>
+</html>

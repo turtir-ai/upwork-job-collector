@@ -1,0 +1,13 @@
+/* Content Script Styles - Injected into Upwork pages */
+
+/* Floating button styles are inline in content-script.js */
+
+/* Any additional styles for injected elements */
+.upwork-ai-injected-button {
+  transition: all 0.3s ease !important;
+}
+
+.upwork-ai-injected-button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+}
