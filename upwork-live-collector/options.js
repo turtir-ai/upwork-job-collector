@@ -29,8 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Automatically set API key from .env if provided
       if (!result.geminiApiKey) {
-        // Use the API key from .env as default
-        apiKeyInput.value = 'AIzaSyDXo9-_1q5ErqPZAiJ_9BQL6pLNlkkGcEQ';
+        // Use placeholder text instead of exposing API key
+        apiKeyInput.placeholder = 'Enter your Gemini API key';
       }
     } catch (error) {
       console.error('Error loading settings:', error);

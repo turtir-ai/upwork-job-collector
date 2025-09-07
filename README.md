@@ -83,6 +83,13 @@ window.$nuxt?.$store?.state
          └─────────────────┘
 ```
 
+## ⚠️ Security Notice
+
+**IMPORTANT**: Never expose API keys in your code!
+- Copy `.env.example` to `.env` and add your actual API keys
+- The `.env` file is gitignored and will not be committed
+- Get your Gemini API key from: https://makersuite.google.com/app/apikey
+
 ## 📦 Installation
 
 ### From Source
