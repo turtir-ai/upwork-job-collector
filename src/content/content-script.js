@@ -117,9 +117,41 @@
 
     extractFromJobList() {
       const jobs = [];
-      const jobCards = Array.from(document.querySelectorAll('[data-test="job-tile"], .job-tile, [class*="job-tile"], article, li')).slice(0, 50);
+      
+      // More comprehensive selectors for different Upwork page layouts
+      const selectors = [
+        'article[data-test="job-tile"]',
+        'div[data-test="job-tile"]',
+        'section[data-test="job-tile"]',
+        '.job-tile',
+        '[class*="job-tile"]',
+        'article[data-ev-label*="search_results"]',
+        'div[data-ev-label*="search_results"]',
+        'section[class*="JobTile"]',
+        'div[class*="JobTile"]',
+        '[data-qa="job-tile"]',
+        '.up-card-section',
+        'article.up-card',
+        'section.up-card'
+      ];
+      
+      let jobCards = [];
+      for (const selector of selectors) {
+        const cards = document.querySelectorAll(selector);
+        if (cards.length > 0) {
+          jobCards = Array.from(cards);
+          console.log(`[Upwork AI] Found ${cards.length} job cards with selector: ${selector}`);
+          break;
+        }
+      }
+      
+      // If no specific job cards found, try generic approach
+      if (jobCards.length === 0) {
+        const main = document.querySelector('main, [role="main"], #main-content') || document.body;
+        jobCards = Array.from(main.querySelectorAll('article, section.up-card, div.up-card')).slice(0, 50);
+      }
 
-      jobCards.forEach(card => {
+      jobCards.forEach((card, index) => {
         try {
           const job = {
             title: '',
@@ -129,42 +161,168 @@
             postedTime: '',
             skills: [],
             proposals: '',
-            url: ''
+            url: '',
+            clientName: '',
+            experienceLevel: ''
           };
 
-          // Extract title
-          const titleEl = card.querySelector('[class*="job-title"], h4, h3, a[href*="/jobs/"]');
-          if (titleEl) job.title = (titleEl.textContent || '').trim();
+          // Extract title - more comprehensive
+          const titleSelectors = [
+            'h4 a[href*="/jobs/"]',
+            'h3 a[href*="/jobs/"]',
+            'h2 a[href*="/jobs/"]',
+            'a[class*="job-title"]',
+            '[data-test="job-title-link"]',
+            '[class*="JobTitle"]',
+            'a[class*="tile-title"]',
+            '.up-n-link',
+            'h4.my-0 a',
+            'h3.my-0 a'
+          ];
+          
+          for (const sel of titleSelectors) {
+            const titleEl = card.querySelector(sel);
+            if (titleEl) {
+              job.title = (titleEl.textContent || '').trim();
+              // Also try to get URL from title link
+              const href = titleEl.getAttribute('href');
+              if (href) {
+                job.url = href.startsWith('http') ? href : `https://www.upwork.com${href}`;
+              }
+              break;
+            }
+          }
 
-          // Extract description
-          const descEl = card.querySelector('[data-test="job-description-text"], [data-qa="job-description"], [class*="job-description"], [class*="description"]');
-          if (descEl) job.description = (descEl.textContent || '').trim();
+          // Extract description - more comprehensive
+          const descSelectors = [
+            '[data-test="job-description-text"]',
+            '[data-qa="job-description"]',
+            '[class*="job-description"]',
+            '[class*="JobDescription"]',
+            'span[data-test="job-description-text"]',
+            'div[data-test="job-description-text"]',
+            '.up-line-clamp-v2',
+            '[class*="description"]',
+            'div.mb-0',
+            'span.text-body'
+          ];
+          
+          for (const sel of descSelectors) {
+            const descEl = card.querySelector(sel);
+            if (descEl && descEl.textContent.trim().length > 20) {
+              job.description = (descEl.textContent || '').trim();
+              break;
+            }
+          }
 
-          // Extract budget
-          const budgetEl = card.querySelector('[class*="budget"], [data-test="budget"]');
-          if (budgetEl) job.budget = (budgetEl.textContent || '').trim();
+          // Extract budget - more patterns
+          const budgetPatterns = [
+            '[data-test="budget"]',
+            '[class*="budget"]',
+            '[data-test="job-type"]',
+            '[data-test="is-fixed-price"]',
+            'strong',  // Will check content in the loop
+            'span[class*="price"]',
+            'span[class*="budget"]',
+            'span[class*="fixed"]',
+            'span[class*="hourly"]',
+            'small strong',
+            '[class*="job-budget"]',
+            '[class*="JobBudget"]'
+          ];
+          
+          for (const pattern of budgetPatterns) {
+            const budgetEl = card.querySelector(pattern);
+            if (budgetEl) {
+              const text = budgetEl.textContent.trim();
+              if (text.includes('$') || text.includes('Fixed') || text.includes('Hourly')) {
+                job.budget = text;
+                break;
+              }
+            }
+          }
+          
+          // Also search for budget in text content
+          if (!job.budget) {
+            const cardText = card.textContent;
+            const budgetMatch = cardText.match(/\$[\d,]+(?:\.\d{2})?(?:\s*-\s*\$[\d,]+(?:\.\d{2})?)?|Fixed-price|Hourly/i);
+            if (budgetMatch) {
+              job.budget = budgetMatch[0];
+            }
+          }
 
           // Extract skills
-          const skillEls = card.querySelectorAll('[class*="skill"], .skill-badge');
-          job.skills = Array.from(skillEls).map(el => el.textContent.trim());
+          const skillSelectors = [
+            '[data-test="skill-badge"]',
+            '[data-test="attr-item"]',
+            '.up-skill-badge',
+            '[class*="skill-badge"]',
+            '[class*="SkillBadge"]',
+            'span.up-skill-badge',
+            'a.up-skill-badge'
+          ];
+          
+          for (const sel of skillSelectors) {
+            const skillEls = card.querySelectorAll(sel);
+            if (skillEls.length > 0) {
+              job.skills = Array.from(skillEls).map(el => el.textContent.trim());
+              break;
+            }
+          }
 
           // Extract posted time
-          const timeEl = card.querySelector('[class*="posted"], time');
-          if (timeEl) job.postedTime = (timeEl.textContent || '').trim();
-
-          // Extract URL
-          let linkEl = card.querySelector('a[href*="/jobs/"]');
-          if (linkEl && linkEl.getAttribute('href')) {
-            const href = linkEl.getAttribute('href');
-            job.url = href.startsWith('http') ? href : (location.origin + href);
+          const timeSelectors = [
+            'time',
+            '[data-test="posted-on"]',
+            '[class*="posted"]',
+            'small time',
+            'span time',
+            '[data-test="job-pubilshed-date"]'
+          ];
+          
+          for (const sel of timeSelectors) {
+            const timeEl = card.querySelector(sel);
+            if (timeEl) {
+              job.postedTime = (timeEl.textContent || timeEl.getAttribute('datetime') || '').trim();
+              break;
+            }
           }
 
-          // Only include if URL exists (likely a real job card)
-          if (job.url) {
+          // Extract proposals count
+          const proposalText = card.textContent;
+          const proposalMatch = proposalText.match(/(\d+)\s*(?:proposals?|applicants?|bids?)/i);
+          if (proposalMatch) {
+            job.proposals = proposalMatch[1];
+          }
+
+          // Extract experience level
+          const expMatch = card.textContent.match(/(?:Experience Level:|^)(Entry Level|Intermediate|Expert)/i);
+          if (expMatch) {
+            job.experienceLevel = expMatch[1];
+          }
+
+          // Extract client info if available
+          const clientMatch = card.textContent.match(/Payment verified|\$[\d,]+\+? spent/i);
+          if (clientMatch) {
+            job.clientName = 'Verified Client';
+          }
+
+          // If no URL found yet, try all links
+          if (!job.url) {
+            const anyLink = card.querySelector('a[href*="/jobs/"], a[href*="/nx/jobs/"], a[href*="/ab/jobs/"]');
+            if (anyLink) {
+              const href = anyLink.getAttribute('href');
+              job.url = href.startsWith('http') ? href : `https://www.upwork.com${href}`;
+            }
+          }
+
+          // Include job if it has at least title or description
+          if (job.title || (job.description && job.description.length > 50)) {
             jobs.push(job);
+            console.log(`[Upwork AI] Extracted job ${index + 1}:`, job.title || 'Untitled');
           }
         } catch (error) {
-          // skip card
+          console.error(`[Upwork AI] Error extracting job ${index}:`, error);
         }
       });
 
@@ -172,7 +330,7 @@
     }
   }
 
-  // In-page network collector injection: use external script to avoid CSP
+  // Load external collector script to avoid CSP issues
   function injectInPageCollector() {
     try {
       // Check if already injected
@@ -181,45 +339,24 @@
         return;
       }
       
-      // Try final research-based collector first
-      const script = document.createElement('script');
-      script.src = chrome.runtime.getURL('collector-final.js');
-      script.setAttribute('data-upwork-ai-collector', 'final');
+      // Create script element pointing to external file
+      const collectorScript = document.createElement('script');
+      collectorScript.src = chrome.runtime.getURL('collector-injected.js');
+      collectorScript.setAttribute('data-upwork-ai-collector', 'external');
       
-      script.onload = () => {
-        console.log('[Upwork AI] Final research-based collector loaded');
-        script.remove(); // Clean up
+      collectorScript.onload = () => {
+        console.log('[Upwork AI] External collector loaded successfully');
       };
       
-      script.onerror = (e) => {
-        console.error('[Upwork AI] Final collector failed, trying ultimate:', e);
-        // Try ultimate collector
-        const ultimateScript = document.createElement('script');
-        ultimateScript.src = chrome.runtime.getURL('collector-ultimate.js');
-        ultimateScript.setAttribute('data-upwork-ai-collector', 'ultimate');
-        ultimateScript.onload = () => {
-          console.log('[Upwork AI] Ultimate collector loaded');
-          ultimateScript.remove();
-        };
-        ultimateScript.onerror = () => {
-          // Try V2
-          const v2Script = document.createElement('script');
-          v2Script.src = chrome.runtime.getURL('collector-injected-v2.js');
-          v2Script.setAttribute('data-upwork-ai-collector', 'v2');
-          v2Script.onload = () => {
-            console.log('[Upwork AI] V2 collector loaded');
-            v2Script.remove();
-          };
-          const target = document.head || document.documentElement || document.body;
-          if (target) target.appendChild(v2Script);
-        };
-        const target = document.head || document.documentElement || document.body;
-        if (target) target.appendChild(ultimateScript);
+      collectorScript.onerror = (e) => {
+        console.error('[Upwork AI] Failed to load external collector:', e);
       };
       
+      // Inject the script
       const target = document.head || document.documentElement || document.body;
       if (target) {
-        target.appendChild(script);
+        target.appendChild(collectorScript);
+        console.log('[Upwork AI] External collector script injected');
       }
     } catch (e) {
       console.warn('injectInPageCollector failed', e);
@@ -255,30 +392,97 @@
     }
     
     async collectJobsFromDOM() {
-      // If we're on a job list page, extract and send jobs
-      if (window.location.href.includes('/nx/search/jobs') || 
-          window.location.href.includes('/search/jobs') ||
-          window.location.href.includes('/ab/find-work')) {
+      // Check if we're on any Upwork job-related page
+      const isJobPage = 
+        window.location.href.includes('/nx/search/jobs') || 
+        window.location.href.includes('/search/jobs') ||
+        window.location.href.includes('/ab/find-work') ||
+        window.location.href.includes('/nx/find-work') ||
+        window.location.href.includes('/best-matches') ||
+        window.location.href.includes('/saved-jobs') ||
+        window.location.href.includes('/job-search') ||
+        window.location.href.includes('/talent/suggested');
         
-        console.log('[Upwork AI] Attempting DOM-based job collection...');
-        const extractor = new JobDataExtractor();
-        const jobs = extractor.extractFromJobList();
+      if (isJobPage) {
+        console.log('[Upwork AI] Job page detected, attempting collection...');
         
-        if (jobs && jobs.length > 0) {
-          console.log('[Upwork AI] Found', jobs.length, 'jobs via DOM extraction');
-          try {
-            const response = await chrome.runtime.sendMessage({ 
-              action: 'collector:jobsBatch', 
-              jobs: jobs 
-            });
-            console.log('[Upwork AI] Jobs sent to background:', response);
-          } catch (e) {
-            console.error('[Upwork AI] Failed to send DOM-extracted jobs:', e);
+        // Wait a bit for page to fully load
+        setTimeout(async () => {
+          const extractor = new JobDataExtractor();
+          const jobs = extractor.extractFromJobList();
+          
+          if (jobs && jobs.length > 0) {
+            console.log('[Upwork AI] Found', jobs.length, 'jobs via DOM extraction');
+            try {
+              const response = await chrome.runtime.sendMessage({ 
+                action: 'collector:jobsBatch', 
+                jobs: jobs 
+              });
+              console.log('[Upwork AI] Jobs sent to background:', response);
+            } catch (e) {
+              console.error('[Upwork AI] Failed to send DOM-extracted jobs:', e);
+            }
+          } else {
+            console.log('[Upwork AI] No jobs found via DOM extraction');
+            
+            // Try again after more delay if no jobs found
+            setTimeout(() => {
+              const retryJobs = extractor.extractFromJobList();
+              if (retryJobs && retryJobs.length > 0) {
+                console.log('[Upwork AI] Found', retryJobs.length, 'jobs on retry');
+                chrome.runtime.sendMessage({ 
+                  action: 'collector:jobsBatch', 
+                  jobs: retryJobs 
+                }).catch(e => console.error('[Upwork AI] Retry failed:', e));
+              }
+            }, 3000);
           }
-        } else {
-          console.log('[Upwork AI] No jobs found via DOM extraction');
-        }
+        }, 1500);
       }
+      
+      // Also set up MutationObserver for dynamic content
+      this.setupDynamicObserver();
+    }
+    
+    setupDynamicObserver() {
+      // Watch for dynamically loaded jobs
+      const observer = new MutationObserver((mutations) => {
+        // Check if new job cards were added
+        const hasNewJobs = mutations.some(mutation => {
+          return Array.from(mutation.addedNodes).some(node => {
+            if (node.nodeType === 1) { // Element node
+              return node.matches?.('[data-test="job-tile"], .job-tile, article, .up-card') ||
+                     node.querySelector?.('[data-test="job-tile"], .job-tile, article, .up-card');
+            }
+            return false;
+          });
+        });
+        
+        if (hasNewJobs) {
+          console.log('[Upwork AI] New jobs detected via MutationObserver');
+          // Debounce to avoid too many calls
+          clearTimeout(this.observerTimeout);
+          this.observerTimeout = setTimeout(() => {
+            const extractor = new JobDataExtractor();
+            const jobs = extractor.extractFromJobList();
+            if (jobs && jobs.length > 0) {
+              chrome.runtime.sendMessage({ 
+                action: 'collector:jobsBatch', 
+                jobs: jobs 
+              }).catch(e => console.error('[Upwork AI] Observer collection failed:', e));
+            }
+          }, 1000);
+        }
+      });
+      
+      // Start observing
+      const target = document.querySelector('main, [role="main"], #main-content') || document.body;
+      observer.observe(target, {
+        childList: true,
+        subtree: true
+      });
+      
+      console.log('[Upwork AI] MutationObserver started for dynamic job loading');
     }
     
     addStyles() {

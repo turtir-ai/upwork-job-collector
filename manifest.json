@@ -49,7 +49,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["styles/*", "assets/*", "collector-injected.js", "collector-injected-v2.js", "collector-ultimate.js", "collector-final.js"],
+      "resources": ["styles/*", "assets/*", "collector-injected.js", "collector-injected-v2.js", "collector-ultimate.js", "collector-final.js", "collector-enhanced.js", "collector-universal.js"],
       "matches": ["https://*.upwork.com/*", "https://upwork.com/*"]
     }
   ],

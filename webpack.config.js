@@ -76,23 +76,8 @@ module.exports = {
           to: 'styles'
         },
         {
-          from: 'public/collector-injected.js',
+          from: 'src/collector-injected.js',
           to: 'collector-injected.js',
-          noErrorOnMissing: false
-        },
-        {
-          from: 'public/collector-injected-v2.js',
-          to: 'collector-injected-v2.js',
-          noErrorOnMissing: false
-        },
-        {
-          from: 'public/collector-ultimate.js',
-          to: 'collector-ultimate.js',
-          noErrorOnMissing: false
-        },
-        {
-          from: 'public/collector-final.js',
-          to: 'collector-final.js',
           noErrorOnMissing: false
         }
       ]

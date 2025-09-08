@@ -4,6 +4,7 @@ import { Settings } from '../components/Settings';
 import { ProposalHistory } from '../components/ProposalHistory';
 import { Templates } from '../components/Templates';
 import { Statistics } from '../components/Statistics';
+import { CollectedJobs } from '../components/CollectedJobs';
 
 const Popup = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -51,6 +52,8 @@ const Popup = () => {
     switch (activeTab) {
       case 'dashboard':
         return <Dashboard settings={settings} />;
+      case 'jobs':
+        return <CollectedJobs />;
       case 'settings':
         return <Settings settings={settings} onSave={saveSettings} />;
       case 'history':
@@ -109,6 +112,13 @@ const Popup = () => {
         >
           <span className="icon">📊</span>
           Dashboard
+        </button>
+        <button 
+          className={`nav-btn ${activeTab === 'jobs' ? 'active' : ''}`}
+          onClick={() => setActiveTab('jobs')}
+        >
+          <span className="icon">💼</span>
+          Jobs
         </button>
         <button 
           className={`nav-btn ${activeTab === 'templates' ? 'active' : ''}`}
